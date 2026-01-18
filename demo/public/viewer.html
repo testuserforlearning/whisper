@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Whisper Viewer</title>
+    <link rel="stylesheet" href="/styles.css" />
+    <style>
+      body{margin:0;display:flex;flex-direction:column;height:100vh}
+      header{padding:12px;background:#071026;color:#fff;display:flex;align-items:center;gap:12px}
+      #status{color:#9ca3af}
+      #frameWrap{flex:1;background:#fff}
+      iframe{width:100%;height:100%;border:0}
+      .controls{margin-left:auto}
+    </style>
+  </head>
+  <body>
+    <header>
+      <div class="topbar">
+        <div class="left">
+          <button id="backBtn" class="icon">◀</button>
+          <button id="forwardBtn" class="icon">▶</button>
+          <button id="reloadBtn" class="icon">⟳</button>
+        </div>
+        <div class="addressWrap">
+          <input id="address" type="text" placeholder="Enter a URL or paste one" autocomplete="off" />
+          <button id="goAddr" class="go">Go</button>
+        </div>
+        <div class="right">
+          <label style="display:inline-flex;align-items:center;gap:8px;margin-right:12px;">
+            <input id="allowSameOrigin" type="checkbox" />
+            <span style="font-size:13px;color:#cbd5e1">allow-same-origin</span>
+          </label>
+          <button id="openBtn" class="ghost">Open</button>
+        </div>
+      </div>
+      <div class="subbar"><span id="status">Loaded</span></div>
+    </header>
+    <div id="frameWrap"><iframe id="proxyFrame" sandbox="allow-scripts allow-forms allow-popups allow-modals allow-top-navigation-by-user-activation"></iframe></div>
+    <script src="/viewer.js"></script>
+  </body>
+</html>
