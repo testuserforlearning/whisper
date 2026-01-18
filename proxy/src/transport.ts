@@ -1,40 +1,85 @@
-import fetch from 'node-fetch';
+import fetch, { Response } from 'node-fetch';
 import { FetchOptions } from '../../shared/types';
 
 type FetchResult = {
   status: number;
   headers: Record<string,string>;
   buffer: Buffer;
+  finalUrl: string;
 };
 
-export async function fetchThroughBareMux(url: string, options: FetchOptions = {}): Promise<FetchResult> {
-  try {
-    const bareMux = require('bare-mux');
-    if (bareMux && typeof bareMux.fetch === 'function') {
-      const res = await bareMux.fetch(url, {
-        method: options.method || 'GET',
-        headers: options.headers || {},
-        body: options.body
-      });
-      const arr = await res.arrayBuffer();
-      const buffer = Buffer.from(arr);
-      const headers: Record<string,string> = {};
-      res.headers.forEach((v:string,k:string)=>headers[k]=v);
-      return { status: res.status, headers, buffer };
-    }
-  } catch (err) {
-  }
+const MAX_REDIRECTS = 10;
 
-  const resp = await fetch(url, {
-    method: options.method || 'GET',
-    headers: options.headers as any || undefined,
-    body: options.body as any || undefined,
-    compress: false
-  });
-  const arrayBuffer = await resp.arrayBuffer();
-  const buffer = Buffer.from(arrayBuffer);
-  const headersObj: Record<string,string> = {};
-  resp.headers.forEach((v,k)=> headersObj[k]=v);
-  return { status: resp.status, headers: headersObj, buffer };
+export async function fetchThroughBareMux(url: string, options: FetchOptions = {}): Promise<FetchResult> {
+  let currentUrl = url;
+  let redirectCount = 0;
+  
+  while (redirectCount < MAX_REDIRECTS) {
+    let resp: Response;
+    
+    try {
+      const bareMux = require('bare-mux');
+      if (bareMux && typeof bareMux.fetch === 'function') {
+        resp = await bareMux.fetch(currentUrl, {
+          method: options.method || 'GET',
+          headers: {
+            'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
+            'Accept-Language': 'en-US,en;q=0.9',
+            'Accept-Encoding': 'identity',
+            ...options.headers
+          },
+          body: options.body,
+          redirect: 'manual'
+        });
+      } else {
+        throw new Error('bare-mux not available');
+      }
+    } catch (err) {
+      resp = await fetch(currentUrl, {
+        method: options.method || 'GET',
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+          'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
+          'Accept-Language': 'en-US,en;q=0.9',
+          'Accept-Encoding': 'identity',
+          ...options.headers as any
+        },
+        body: options.body as any || undefined,
+        compress: false,
+        redirect: 'manual'
+      });
+    }
+    
+    // Handle redirects
+    if (resp.status >= 300 && resp.status < 400) {
+      const location = resp.headers.get('location');
+      if (location) {
+        // Resolve relative redirects
+        try {
+          currentUrl = new URL(location, currentUrl).href;
+        } catch {
+          currentUrl = location;
+        }
+        redirectCount++;
+        continue;
+      }
+    }
+    
+    // Not a redirect, return the response
+    const arrayBuffer = await resp.arrayBuffer();
+    const buffer = Buffer.from(arrayBuffer);
+    const headersObj: Record<string,string> = {};
+    resp.headers.forEach((v,k) => headersObj[k] = v);
+    
+    return { 
+      status: resp.status, 
+      headers: headersObj, 
+      buffer,
+      finalUrl: currentUrl
+    };
+  }
+  
+  throw new Error('Too many redirects');
 }
 

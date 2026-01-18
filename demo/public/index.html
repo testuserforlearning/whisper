@@ -1,29 +1,35 @@
-
 <!doctype html>
 <html lang="en">
   <head>
-  <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <title>Whisper Proxy Demo</title>
+    <title>new proccy</title>
     <link rel="stylesheet" href="/styles.css" />
+    <script src="https://unpkg.com/lucide@latest"></script>
   </head>
   <body>
-    <main class="hero">
-      <div class="hero-inner">
-        <div class="brand">
-          <div class="logo">Whisper</div>
-          <div class="tag">Proxy demo</div>
+    <header>
+      <div class="top">
+        <div class="navs">
+          <button id="back" title="Back"><i data-lucide="arrow-left"></i></button>
+          <button id="next" title="Forward"><i data-lucide="arrow-right"></i></button>
+          <button id="redo" title="Reload"><i data-lucide="rotate-cw"></i></button>
+          <button id="open" title="Open in new tab"><i data-lucide="external-link"></i></button>
         </div>
-        <h1 class="headline">Whisper Proxy Demo</h1>
-        <p class="sub">Enter a URL to load through the proxy.</p>
-        <div class="search">
-          <input id="urlInput" placeholder="https://example.com" />
-          <button id="goBtn">Go</button>
+        
+        <div class="bar">
+          <input id="url" type="text" placeholder="Search or enter URL" autocomplete="off" />
         </div>
-        <div id="status" class="meta"></div>
       </div>
+      <div class="status">
+        <span id="stat"></span>
+      </div>
+    </header>
+
+    <main>
+  <iframe id="frame" sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals allow-top-navigation-by-user-activation"></iframe>
     </main>
-    <script src="/main.js"></script>
+
+    <script src="/viewer.js"></script>
   </body>
 </html>

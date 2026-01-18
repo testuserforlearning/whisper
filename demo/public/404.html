@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>404</title>
+    <link rel="stylesheet" href="/styles.css" />
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        .error-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: #111;
+            margin: 0 8px 8px 8px;
+            margin-top: -12px;
+            border-radius: 32px;
+            position: relative;
+            z-index: 5;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.4);
+        }
+        .error-code {
+            font-size: 6rem;
+            font-weight: 800;
+            color: var(--text);
+            margin: 0;
+            line-height: 1;
+        }
+        .error-message {
+            font-size: 1.2rem;
+            color: var(--muted);
+            margin-top: 1rem;
+        }
+        .error-trace {
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 1rem;
+            margin-top: 2rem;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+            font-size: 0.85rem;
+            color: var(--muted);
+            max-width: 400px;
+            text-align: left;
+        }
+        .error-actions {
+            display: flex;
+            gap: 12px;
+            margin-top: 2rem;
+        }
+        .error-actions button {
+            background: var(--accent);
+            padding: 12px 24px;
+            font-weight: 600;
+        }
+        .error-actions button.primary {
+            background: var(--text);
+            color: var(--bg);
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="top">
+            <div class="navs">
+                <button onclick="history.back()" title="Back"><i data-lucide="arrow-left"></i></button>
+                <button onclick="history.forward()" title="Forward"><i data-lucide="arrow-right"></i></button>
+                <button onclick="location.reload()" title="Reload"><i data-lucide="rotate-cw"></i></button>
+                <button onclick="location.href='/'" title="Home"><i data-lucide="home"></i></button>
+            </div>
+            <div class="bar">
+                <input type="text" placeholder="Search or enter URL" autocomplete="off" />
+            </div>
+        </div>
+        <div class="status">
+            <span>Page not found</span>
+        </div>
+    </header>
+
+    <div class="error-container">
+        <h1 class="error-code">404</h1>
+        <p class="error-message">The requested page could not be found.</p>
+        <div class="error-trace">Error: The resource you are looking for does not exist on this server.</div>
+        <div class="error-actions">
+            <button class="primary" onclick="location.href='/'">Go Home</button>
+            <button onclick="history.back()">Go Back</button>
+        </div>
+    </div>
+
+    <script>if (window.lucide) lucide.createIcons();</script>
+</body>
+</html>
