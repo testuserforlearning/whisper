@@ -51,11 +51,9 @@ export async function fetchThroughBareMux(url: string, options: FetchOptions = {
       });
     }
     
-    // Handle redirects
     if (resp.status >= 300 && resp.status < 400) {
       const location = resp.headers.get('location');
       if (location) {
-        // Resolve relative redirects
         try {
           currentUrl = new URL(location, currentUrl).href;
         } catch {
@@ -66,7 +64,6 @@ export async function fetchThroughBareMux(url: string, options: FetchOptions = {
       }
     }
     
-    // Not a redirect, return the response
     const arrayBuffer = await resp.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
     const headersObj: Record<string,string> = {};

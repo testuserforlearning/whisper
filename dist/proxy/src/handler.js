@@ -9,11 +9,14 @@ async function handleProxyRequest(req, res) {
     res.set('Access-Control-Allow-Origin', '*');
     res.set('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,OPTIONS,HEAD,PATCH');
     res.set('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, Origin');
-    res.set('Access-Control-Allow-Credentials', 'true');
+    res.set('Access-Control-Allow-Credentials', 'false');
     if (req.method === 'OPTIONS') {
         return res.status(204).send('');
     }
     var encoded = req.query.url;
+    if (!encoded && req.params && req.params.encoded) {
+        encoded = req.params.encoded;
+    }
     if (!encoded) {
         const refererHeader = req.headers.referer || req.headers.referrer || '';
         const referer = Array.isArray(refererHeader) ? refererHeader[0] : refererHeader;
@@ -61,8 +64,12 @@ async function handleProxyRequest(req, res) {
     try {
         var result = await (0, transport_1.fetchThroughBareMux)(target, { method: req.method || 'GET' });
         const baseForRewriting = result.finalUrl || target;
+        const rw = new rewriter_1.Rewriter(baseForRewriting);
         if (result.status === 404) {
-            return res.redirect('/404.html');
+            if (req.headers.accept && req.headers.accept.includes('text/html')) {
+                return res.redirect('/404.html');
+            }
+            return res.status(404).send('Not found');
         }
         var normalized = {};
         Object.entries(result.headers).forEach(function ([k, v]) {
@@ -79,7 +86,7 @@ async function handleProxyRequest(req, res) {
         var hopByHop = new Set(['connection', 'transfer-encoding', 'keep-alive', 'proxy-authenticate', 'proxy-authorization', 'upgrade']);
         if ((0, utils_1.isHtmlContentType)(ct)) {
             var html = result.buffer.toString('utf-8');
-            var rewritten = (0, rewriter_1.rewriteHtml)(html, baseForRewriting);
+            var rewritten = rw.html.rewrite(html);
             res.set('content-type', 'text/html; charset=utf-8');
             Object.entries(normalized).forEach(function ([k, v]) {
                 if (!hopByHop.has(k) && v != null)
@@ -89,7 +96,11 @@ async function handleProxyRequest(req, res) {
         }
         if (ct.indexOf('javascript') !== -1 || ct.indexOf('ecmascript') !== -1) {
             var js = result.buffer.toString('utf-8');
-            var rewrittenJs = (0, rewriter_1.rewriteJs)(js, baseForRewriting);
+            if (/^\s*</.test(js)) {
+                res.set('content-type', 'application/javascript');
+                return res.status(404).send('// non-JS response blocked by proxy');
+            }
+            var rewrittenJs = rw.js.rewrite(js);
             res.set('content-type', ct);
             Object.entries(normalized).forEach(function ([k, v]) {
                 if (!hopByHop.has(k) && v != null)
@@ -99,7 +110,7 @@ async function handleProxyRequest(req, res) {
         }
         if (ct.indexOf('text/css') !== -1) {
             var css = result.buffer.toString('utf-8');
-            var rewrittenCss = (0, rewriter_1.rewriteCss)(css, baseForRewriting);
+            var rewrittenCss = rw.css.rewrite(css);
             res.set('content-type', 'text/css; charset=utf-8');
             Object.entries(normalized).forEach(function ([k, v]) {
                 if (!hopByHop.has(k) && v != null)
@@ -109,7 +120,7 @@ async function handleProxyRequest(req, res) {
         }
         if (ct.indexOf('image/svg+xml') !== -1) {
             var svg = result.buffer.toString('utf-8');
-            var rewrittenSvg = (0, rewriter_1.rewriteSvg)(svg, baseForRewriting);
+            var rewrittenSvg = rw.svg.rewrite(svg);
             res.set('content-type', 'image/svg+xml');
             Object.entries(normalized).forEach(function ([k, v]) {
                 if (!hopByHop.has(k) && v != null)
@@ -119,7 +130,7 @@ async function handleProxyRequest(req, res) {
         }
         if (ct.indexOf('application/manifest+json') !== -1 || ct.indexOf('application/json') !== -1 && baseForRewriting.includes('manifest')) {
             var manifest = result.buffer.toString('utf-8');
-            var rewrittenManifest = (0, rewriter_1.rewriteManifest)(manifest, baseForRewriting);
+            var rewrittenManifest = rw.manifest.rewrite(manifest);
             res.set('content-type', ct);
             Object.entries(normalized).forEach(function ([k, v]) {
                 if (!hopByHop.has(k) && v != null)
@@ -149,7 +160,7 @@ async function handleProxyRequest(req, res) {
                 normalized['content-type'] = 'image/gif';
             else if (lower.endsWith('.js')) {
                 var jsContent = result.buffer.toString('utf-8');
-                var rewrittenJsContent = (0, rewriter_1.rewriteJs)(jsContent, baseForRewriting);
+                var rewrittenJsContent = rw.js.rewrite(jsContent);
                 normalized['content-type'] = 'application/javascript';
                 Object.entries(normalized).forEach(function ([k, v]) {
                     if (!hopByHop.has(k) && v != null)
@@ -159,7 +170,7 @@ async function handleProxyRequest(req, res) {
             }
             else if (lower.endsWith('.css')) {
                 var cssContent = result.buffer.toString('utf-8');
-                var rewrittenCssContent = (0, rewriter_1.rewriteCss)(cssContent, baseForRewriting);
+                var rewrittenCssContent = rw.css.rewrite(cssContent);
                 normalized['content-type'] = 'text/css';
                 Object.entries(normalized).forEach(function ([k, v]) {
                     if (!hopByHop.has(k) && v != null)
@@ -169,7 +180,7 @@ async function handleProxyRequest(req, res) {
             }
             else if (lower.endsWith('.html') || lower.endsWith('.htm')) {
                 var htmlContent = result.buffer.toString('utf-8');
-                var rewrittenHtmlContent = (0, rewriter_1.rewriteHtml)(htmlContent, baseForRewriting);
+                var rewrittenHtmlContent = rw.html.rewrite(htmlContent);
                 normalized['content-type'] = 'text/html';
                 Object.entries(normalized).forEach(function ([k, v]) {
                     if (!hopByHop.has(k) && v != null)
@@ -189,10 +200,21 @@ async function handleProxyRequest(req, res) {
         return res.status(result.status).send(result.buffer);
     }
     catch (err) {
-        return res.redirect('/404.html');
+        res.set('Access-Control-Allow-Origin', '*');
+        res.set('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,OPTIONS,HEAD,PATCH');
+        res.set('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, Origin');
+        res.set('Access-Control-Allow-Credentials', 'false');
+        if (req.headers.accept && req.headers.accept.includes('text/html')) {
+            return res.redirect('/404.html');
+        }
+        return res.status(404).send('Not found');
     }
 }
 async function handleChunkRequest(req, res) {
+    res.set('Access-Control-Allow-Origin', '*');
+    res.set('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,OPTIONS,HEAD,PATCH');
+    res.set('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, Origin');
+    res.set('Access-Control-Allow-Credentials', 'false');
     const refererHeader = req.headers.referer || req.headers.referrer || '';
     const referer = Array.isArray(refererHeader) ? refererHeader[0] : refererHeader;
     let baseUrl = '';
@@ -217,6 +239,7 @@ async function handleChunkRequest(req, res) {
         const targetUrl = baseOrigin + chunkPath + queryString;
         const result = await (0, transport_1.fetchThroughBareMux)(targetUrl, { method: 'GET' });
         const finalUrl = result.finalUrl || targetUrl;
+        const rw2 = new rewriter_1.Rewriter(finalUrl);
         var normalized = {};
         Object.entries(result.headers).forEach(function ([k, v]) {
             if (v != null)
@@ -230,8 +253,12 @@ async function handleChunkRequest(req, res) {
         var ct = normalized['content-type'] || '';
         var hopByHop = new Set(['connection', 'transfer-encoding', 'keep-alive', 'proxy-authenticate', 'proxy-authorization', 'upgrade']);
         if (ct.includes('text/html') || ct.includes('application/xhtml+xml')) {
+            if (chunkPath.endsWith('.js')) {
+                res.set('content-type', 'application/javascript');
+                return res.status(404).send('// html chunk blocked by proxy');
+            }
             var html = result.buffer.toString('utf-8');
-            var rewrittenHtml = (0, rewriter_1.rewriteHtml)(html, finalUrl);
+            var rewrittenHtml = rw2.html.rewrite(html);
             res.set('content-type', 'text/html; charset=utf-8');
             Object.entries(normalized).forEach(function ([k, v]) {
                 if (!hopByHop.has(k) && v != null)
@@ -241,7 +268,11 @@ async function handleChunkRequest(req, res) {
         }
         if (ct.includes('javascript') || ct.includes('ecmascript') || chunkPath.endsWith('.js')) {
             var js = result.buffer.toString('utf-8');
-            var rewrittenJs = (0, rewriter_1.rewriteJs)(js, finalUrl);
+            if (/^\s*</.test(js)) {
+                res.set('content-type', 'application/javascript');
+                return res.status(404).send('// non-JS chunk blocked by proxy');
+            }
+            var rewrittenJs = rw2.js.rewrite(js);
             res.set('content-type', ct || 'application/javascript');
             Object.entries(normalized).forEach(function ([k, v]) {
                 if (!hopByHop.has(k) && v != null)
@@ -251,7 +282,7 @@ async function handleChunkRequest(req, res) {
         }
         if (ct.includes('text/css') || chunkPath.endsWith('.css')) {
             var css = result.buffer.toString('utf-8');
-            var rewrittenCss = (0, rewriter_1.rewriteCss)(css, finalUrl);
+            var rewrittenCss = rw2.css.rewrite(css);
             res.set('content-type', ct || 'text/css');
             Object.entries(normalized).forEach(function ([k, v]) {
                 if (!hopByHop.has(k) && v != null)
@@ -259,7 +290,6 @@ async function handleChunkRequest(req, res) {
             });
             return res.status(result.status).send(rewrittenCss);
         }
-        // Pass through other content
         Object.entries(normalized).forEach(function ([k, v]) {
             if (!hopByHop.has(k) && v != null)
                 res.set(k, v);

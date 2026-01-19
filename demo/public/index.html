@@ -20,6 +20,12 @@
         <div class="bar">
           <input id="url" type="text" placeholder="Search or enter URL" autocomplete="off" />
         </div>
+         <div class="top">
+        <div class="navs">
+          <button id="games" title="Back"><i data-lucide="arrow-left"></i></button>
+          <button id="settings" title="Forward"><i data-lucide="arrow-right"></i></button>
+          <button id="apps" title="Open in new tab"><i data-lucide="external-link"></i></button>
+        </div>
       </div>
       <div class="status">
         <span id="stat"></span>
@@ -27,9 +33,53 @@
     </header>
 
     <main>
-  <iframe id="frame" sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals allow-top-navigation-by-user-activation"></iframe>
+      <iframe id="frame" sandbox="allow-scripts allow-forms allow-pointer-lock allow-modals allow-popups"></iframe>
     </main>
 
+    <script src="//cdn.jsdelivr.net/npm/eruda"></script>
+    <script>
+      function initEruda() {
+        const container = document.createElement('div');
+        container.id = 'eruda-container';
+        container.style.position = 'fixed';
+        container.style.zIndex = '10000';
+        container.style.pointerEvents = 'none';
+        container.style.bottom = '0';
+        container.style.left = '0';
+        container.style.width = '0';
+        container.style.height = '0';
+        document.body.appendChild(container);
+
+        eruda.init({
+          container: container,
+          defaults: {
+            displaySize: 40,
+            theme: 'Dracula'
+          }
+        });
+
+        setTimeout(() => {
+          const shadowRoot = container.shadowRoot || (container.firstElementChild && container.firstElementChild.shadowRoot);
+          
+          if (shadowRoot) {
+             const style = document.createElement('style');
+             style.textContent = `
+               .eruda-entry-btn {
+                 left: 20px !important;
+                 right: auto !important;
+                 border-radius: 20px !important; /* Match --pill-radius */
+                 bottom: 20px !important;
+                 pointer-events: auto !important; /* Re-enable clicks on the button */
+                 position: fixed !important; /* Ensure it stays fixed relative to screen */
+               }
+             `;
+             shadowRoot.appendChild(style);
+          }
+        }, 100);
+      }
+      
+      initEruda();
+    </script>
     <script src="/viewer.js"></script>
   </body>
 </html>

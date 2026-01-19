@@ -9,9 +9,8 @@ export function createRouter() {
   router.use('/', express.static(demoPublic));
 
   router.get('/proxy', handleProxyRequest);
+  router.get('/r/:ext/:encoded', handleProxyRequest);
   
-  // Handle chunk requests that come from webpack bundles
-  // These are paths like /chunk-123.js, /assets/chunk.js, etc.
   router.get('*', handleChunkRequest);
 
   return router;

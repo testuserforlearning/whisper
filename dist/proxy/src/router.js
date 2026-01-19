@@ -12,8 +12,7 @@ function createRouter() {
     const demoPublic = path_1.default.join(__dirname, '..', '..', 'demo', 'public');
     router.use('/', express_1.default.static(demoPublic));
     router.get('/proxy', handler_1.handleProxyRequest);
-    // Handle chunk requests that come from webpack bundles
-    // These are paths like /chunk-123.js, /assets/chunk.js, etc.
+    router.get('/r/:ext/:encoded', handler_1.handleProxyRequest);
     router.get('*', handler_1.handleChunkRequest);
     return router;
 }

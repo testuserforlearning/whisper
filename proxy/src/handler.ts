@@ -1,19 +1,22 @@
 import { Request, Response } from 'express';
 import { fetchThroughBareMux } from './transport';
 import { b64decode, b64encode, isHtmlContentType } from './utils';
-import { rewriteHtml, rewriteCss, rewriteJs, rewriteManifest, rewriteSvg } from './rewriter';
+import { Rewriter } from './rewriter';
 
 export async function handleProxyRequest(req: Request, res: Response) {
     res.set('Access-Control-Allow-Origin', '*');
     res.set('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,OPTIONS,HEAD,PATCH');
     res.set('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, Origin');
-    res.set('Access-Control-Allow-Credentials', 'true');
+    res.set('Access-Control-Allow-Credentials', 'false');
 
     if (req.method === 'OPTIONS') {
         return res.status(204).send('');
     }
 
     var encoded = req.query.url as string | undefined;
+    if (!encoded && req.params && (req.params as any).encoded) {
+        encoded = (req.params as any).encoded as string;
+    }
   
     if (!encoded) {
         const refererHeader = req.headers.referer || req.headers.referrer || '';
@@ -65,9 +68,13 @@ export async function handleProxyRequest(req: Request, res: Response) {
         var result = await fetchThroughBareMux(target, { method: req.method || 'GET' });
         
         const baseForRewriting = result.finalUrl || target;
+        const rw = new Rewriter(baseForRewriting);
 
         if (result.status === 404) {
-            return res.redirect('/404.html');
+            if (req.headers.accept && req.headers.accept.includes('text/html')) {
+                return res.redirect('/404.html');
+            }
+            return res.status(404).send('Not found');
         }
 
         var normalized: Record<string, string> = {};
@@ -87,7 +94,7 @@ export async function handleProxyRequest(req: Request, res: Response) {
 
         if (isHtmlContentType(ct)) {
             var html = result.buffer.toString('utf-8');
-            var rewritten = rewriteHtml(html, baseForRewriting);
+            var rewritten = rw.html.rewrite(html);
 
             res.set('content-type', 'text/html; charset=utf-8');
             Object.entries(normalized).forEach(function([k, v]) {
@@ -98,7 +105,13 @@ export async function handleProxyRequest(req: Request, res: Response) {
 
         if (ct.indexOf('javascript') !== -1 || ct.indexOf('ecmascript') !== -1) {
             var js = result.buffer.toString('utf-8');
-            var rewrittenJs = rewriteJs(js, baseForRewriting);
+
+            if (/^\s*</.test(js)) {
+                res.set('content-type', 'application/javascript');
+                return res.status(404).send('// non-JS response blocked by proxy');
+            }
+
+            var rewrittenJs = rw.js.rewrite(js);
 
             res.set('content-type', ct);
             Object.entries(normalized).forEach(function([k, v]) {
@@ -109,7 +122,7 @@ export async function handleProxyRequest(req: Request, res: Response) {
 
         if (ct.indexOf('text/css') !== -1) {
             var css = result.buffer.toString('utf-8');
-            var rewrittenCss = rewriteCss(css, baseForRewriting);
+            var rewrittenCss = rw.css.rewrite(css);
 
             res.set('content-type', 'text/css; charset=utf-8');
             Object.entries(normalized).forEach(function([k, v]) {
@@ -120,7 +133,7 @@ export async function handleProxyRequest(req: Request, res: Response) {
 
         if (ct.indexOf('image/svg+xml') !== -1) {
             var svg = result.buffer.toString('utf-8');
-            var rewrittenSvg = rewriteSvg(svg, baseForRewriting);
+            var rewrittenSvg = rw.svg.rewrite(svg);
 
             res.set('content-type', 'image/svg+xml');
             Object.entries(normalized).forEach(function([k, v]) {
@@ -131,7 +144,7 @@ export async function handleProxyRequest(req: Request, res: Response) {
 
         if (ct.indexOf('application/manifest+json') !== -1 || ct.indexOf('application/json') !== -1 && baseForRewriting.includes('manifest')) {
             var manifest = result.buffer.toString('utf-8');
-            var rewrittenManifest = rewriteManifest(manifest, baseForRewriting);
+            var rewrittenManifest = rw.manifest.rewrite(manifest);
 
             res.set('content-type', ct);
             Object.entries(normalized).forEach(function([k, v]) {
@@ -153,7 +166,7 @@ export async function handleProxyRequest(req: Request, res: Response) {
             else if (lower.endsWith('.gif')) normalized['content-type'] = 'image/gif';
             else if (lower.endsWith('.js')) {
                 var jsContent = result.buffer.toString('utf-8');
-                var rewrittenJsContent = rewriteJs(jsContent, baseForRewriting);
+                var rewrittenJsContent = rw.js.rewrite(jsContent);
                 normalized['content-type'] = 'application/javascript';
                 Object.entries(normalized).forEach(function([k, v]) {
                     if (!hopByHop.has(k) && v != null) res.set(k, v as string);
@@ -162,7 +175,7 @@ export async function handleProxyRequest(req: Request, res: Response) {
             }
             else if (lower.endsWith('.css')) {
                 var cssContent = result.buffer.toString('utf-8');
-                var rewrittenCssContent = rewriteCss(cssContent, baseForRewriting);
+                var rewrittenCssContent = rw.css.rewrite(cssContent);
                 normalized['content-type'] = 'text/css';
                 Object.entries(normalized).forEach(function([k, v]) {
                     if (!hopByHop.has(k) && v != null) res.set(k, v as string);
@@ -171,7 +184,7 @@ export async function handleProxyRequest(req: Request, res: Response) {
             }
             else if (lower.endsWith('.html') || lower.endsWith('.htm')) {
                 var htmlContent = result.buffer.toString('utf-8');
-                var rewrittenHtmlContent = rewriteHtml(htmlContent, baseForRewriting);
+                var rewrittenHtmlContent = rw.html.rewrite(htmlContent);
                 normalized['content-type'] = 'text/html';
                 Object.entries(normalized).forEach(function([k, v]) {
                     if (!hopByHop.has(k) && v != null) res.set(k, v as string);
@@ -190,11 +203,22 @@ export async function handleProxyRequest(req: Request, res: Response) {
 
         return res.status(result.status).send(result.buffer);
     } catch (err: any) {
-        return res.redirect('/404.html');
+        res.set('Access-Control-Allow-Origin', '*');
+        res.set('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,OPTIONS,HEAD,PATCH');
+        res.set('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, Origin');
+        res.set('Access-Control-Allow-Credentials', 'false');
+        if (req.headers.accept && req.headers.accept.includes('text/html')) {
+            return res.redirect('/404.html');
+        }
+        return res.status(404).send('Not found');
     }
 }
 
 export async function handleChunkRequest(req: Request, res: Response) {
+    res.set('Access-Control-Allow-Origin', '*');
+    res.set('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,OPTIONS,HEAD,PATCH');
+    res.set('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, Origin');
+    res.set('Access-Control-Allow-Credentials', 'false');
     const refererHeader = req.headers.referer || req.headers.referrer || '';
     const referer = Array.isArray(refererHeader) ? refererHeader[0] : refererHeader;
 
@@ -223,6 +247,7 @@ export async function handleChunkRequest(req: Request, res: Response) {
         
         const result = await fetchThroughBareMux(targetUrl, { method: 'GET' });
         const finalUrl = result.finalUrl || targetUrl;
+        const rw2 = new Rewriter(finalUrl);
         
         var normalized: Record<string, string> = {};
         Object.entries(result.headers).forEach(function([k, v]) {
@@ -239,8 +264,13 @@ export async function handleChunkRequest(req: Request, res: Response) {
         var hopByHop = new Set(['connection', 'transfer-encoding', 'keep-alive', 'proxy-authenticate', 'proxy-authorization', 'upgrade']);
 
         if (ct.includes('text/html') || ct.includes('application/xhtml+xml')) {
+            if (chunkPath.endsWith('.js')) {
+                res.set('content-type', 'application/javascript');
+                return res.status(404).send('// html chunk blocked by proxy');
+            }
+
             var html = result.buffer.toString('utf-8');
-            var rewrittenHtml = rewriteHtml(html, finalUrl);
+            var rewrittenHtml = rw2.html.rewrite(html);
 
             res.set('content-type', 'text/html; charset=utf-8');
             Object.entries(normalized).forEach(function([k, v]) {
@@ -251,7 +281,13 @@ export async function handleChunkRequest(req: Request, res: Response) {
 
         if (ct.includes('javascript') || ct.includes('ecmascript') || chunkPath.endsWith('.js')) {
             var js = result.buffer.toString('utf-8');
-            var rewrittenJs = rewriteJs(js, finalUrl);
+
+            if (/^\s*</.test(js)) {
+                res.set('content-type', 'application/javascript');
+                return res.status(404).send('// non-JS chunk blocked by proxy');
+            }
+
+            var rewrittenJs = rw2.js.rewrite(js);
 
             res.set('content-type', ct || 'application/javascript');
             Object.entries(normalized).forEach(function([k, v]) {
@@ -262,7 +298,7 @@ export async function handleChunkRequest(req: Request, res: Response) {
 
         if (ct.includes('text/css') || chunkPath.endsWith('.css')) {
             var css = result.buffer.toString('utf-8');
-            var rewrittenCss = rewriteCss(css, finalUrl);
+            var rewrittenCss = rw2.css.rewrite(css);
 
             res.set('content-type', ct || 'text/css');
             Object.entries(normalized).forEach(function([k, v]) {
@@ -271,7 +307,6 @@ export async function handleChunkRequest(req: Request, res: Response) {
             return res.status(result.status).send(rewrittenCss);
         }
 
-        // Pass through other content
         Object.entries(normalized).forEach(function([k, v]) {
             if (!hopByHop.has(k) && v != null) res.set(k, v as string);
         });
