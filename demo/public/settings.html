@@ -1,0 +1,590 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>decayed-central - Settings</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: rgba(0, 0, 0, 0.5);
+            color: #e0e0e0;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            backdrop-filter: blur(2px);
+        }
+
+        .sidebar-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.3);
+            z-index: 10000;
+            animation: fadeIn 0.2s ease-out;
+        }
+
+        .sidebar-container {
+            position: fixed;
+            top: 0;
+            right: 0;
+            width: 400px;
+            height: 100vh;
+            background: #ffffff;
+            box-shadow: -4px 0 20px rgba(0, 0, 0, 0.15);
+            animation: slideIn 0.3s ease-out;
+            display: flex;
+            flex-direction: column;
+            z-index: 10001;
+            overflow: hidden;
+        }
+
+        .sidebar-header {
+            padding: 20px 24px;
+            border-bottom: 1px solid #e5e5e5;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: #ffffff;
+            flex-shrink: 0;
+        }
+
+        .sidebar-title {
+            font-size: 1.25em;
+            font-weight: 600;
+            color: #1a1a1a;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            color: #666666;
+            cursor: pointer;
+            padding: 8px;
+            border-radius: 6px;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .close-btn:hover {
+            background: #f5f5f5;
+            color: #1a1a1a;
+        }
+
+        .sidebar-body {
+            flex: 1;
+            overflow-y: auto;
+            background: #ffffff;
+            padding: 0;
+        }
+
+        .settings-section {
+            border-bottom: 1px solid #e5e5e5;
+        }
+
+        .section-header {
+            padding: 16px 24px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #e5e5e5;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .section-icon {
+            width: 20px;
+            height: 20px;
+            color: #667eea;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .section-title {
+            font-size: 0.9em;
+            font-weight: 600;
+            color: #1a1a1a;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .setting-item {
+            padding: 16px 24px;
+            border-bottom: 1px solid #f0f0f0;
+            transition: background-color 0.2s ease;
+        }
+
+        .setting-item:hover {
+            background: #f8f9fa;
+        }
+
+        .setting-item:last-child {
+            border-bottom: none;
+        }
+
+        .setting-label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #1a1a1a;
+            font-size: 0.95em;
+        }
+
+        .setting-input {
+            width: 100%;
+            padding: 10px 12px;
+            background: #ffffff;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            color: #1a1a1a;
+            font-size: 14px;
+            transition: all 0.2s ease;
+        }
+
+        .setting-input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.1);
+        }
+
+        .setting-select {
+            width: 100%;
+            padding: 10px 12px;
+            background: #ffffff;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            color: #1a1a1a;
+            font-size: 14px;
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+
+        .setting-select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.1);
+        }
+
+        .setting-select option {
+            background: #ffffff;
+            color: #1a1a1a;
+        }
+
+        .info-text {
+            font-size: 12px;
+            color: #6b7280;
+            margin-top: 6px;
+            line-height: 1.4;
+        }
+
+        .toggle-container {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .toggle-label {
+            font-weight: 500;
+            color: #1a1a1a;
+            font-size: 0.95em;
+        }
+
+        .toggle-switch {
+            position: relative;
+            width: 44px;
+            height: 24px;
+            background: #d1d5db;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+        }
+
+        .toggle-switch.active {
+            background: #667eea;
+        }
+
+        .toggle-switch::after {
+            content: '';
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            background: #ffffff;
+            border-radius: 50%;
+            top: 2px;
+            left: 2px;
+            transition: transform 0.2s ease;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .toggle-switch.active::after {
+            transform: translateX(20px);
+        }
+
+        .button-container {
+            padding: 20px 24px;
+            border-top: 1px solid #e5e5e5;
+            display: flex;
+            gap: 12px;
+            justify-content: flex-end;
+            background: #f8f9fa;
+            flex-shrink: 0;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #5a67d8;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn-secondary {
+            background: #ffffff;
+            color: #6b7280;
+            border: 1px solid #d1d5db;
+        }
+
+        .btn-secondary:hover {
+            background: #f8f9fa;
+            border-color: #9ca3af;
+            color: #1a1a1a;
+        }
+
+        .status-container {
+            padding: 12px 24px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #e5e5e5;
+        }
+
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+            color: #6b7280;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #ef4444;
+        }
+
+        .status-dot.connected {
+            background: #10b981;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes slideIn {
+            from { 
+                transform: translateX(100%);
+            }
+            to { 
+                transform: translateX(0);
+            }
+        }
+
+        .status-message {
+            position: fixed;
+            top: 20px;
+            right: 420px;
+            padding: 12px 20px;
+            border-radius: 8px;
+            font-weight: 500;
+            font-size: 14px;
+            z-index: 10002;
+            animation: slideInLeft 0.3s ease-out;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .status-message.success {
+            background: #10b981;
+            color: white;
+        }
+
+        .status-message.error {
+            background: #ef4444;
+            color: white;
+        }
+
+        @keyframes slideInLeft {
+            from { 
+                opacity: 0;
+                transform: translateX(20px);
+            }
+            to { 
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="sidebar-overlay"></div>
+    <div class="sidebar-container">
+        <div class="sidebar-header">
+            <div class="sidebar-title">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="3"></circle>
+                    <path d="M12 1v6m0 6v6m4.22-13.22l4.24 4.24M1.54 1.54l4.24 4.24M20.46 20.46l-4.24-4.24M1.54 20.46l4.24-4.24"></path>
+                </svg>
+                Settings
+            </div>
+            <button class="close-btn" onclick="closeSettings()">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+            </button>
+        </div>
+        
+        <div class="sidebar-body">
+            <div class="status-container">
+                <div class="status-indicator">
+                    <div class="status-dot" id="statusDot"></div>
+                    <span id="statusText">Disconnected</span>
+                </div>
+            </div>
+
+            <div class="settings-section">
+                <div class="section-header">
+                    <div class="section-icon">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <line x1="2" y1="12" x2="22" y2="12"></line>
+                            <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
+                        </svg>
+                    </div>
+                    <div class="section-title">Proxy Configuration</div>
+                </div>
+                
+                <div class="setting-item">
+                    <label class="setting-label">Proxy Type</label>
+                    <select class="setting-select" id="proxyType">
+                        <option value="scramjet">Scramjet (Recommended)</option>
+                        <option value="direct">Direct Connection</option>
+                    </select>
+                </div>
+
+                <div class="setting-item">
+                    <label class="setting-label">Transport Method</label>
+                    <select class="setting-select" id="transportType">
+                        <option value="libcurl">Libcurl (Stable)</option>
+                        <option value="epoxy">Epoxy (Fast)</option>
+                    </select>
+                </div>
+
+                <div class="setting-item">
+                    <label class="setting-label">WebSocket Server</label>
+                    <input type="text" class="setting-input" id="wispServer" value="wss://wisp.rhw.one/" placeholder="wss://your-wisp-server.com/">
+                    <div class="info-text">WebSocket server for proxy transport connections</div>
+                </div>
+
+                <div class="setting-item">
+                    <label class="setting-label">Scramjet Prefix</label>
+                    <input type="text" class="setting-input" id="scramjetPrefix" value="/sail/go/" placeholder="/custom/prefix/">
+                    <div class="info-text">URL prefix for Scramjet encoding and routing</div>
+                </div>
+            </div>
+
+            <div class="settings-section">
+                <div class="section-header">
+                    <div class="section-icon">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="3"></circle>
+                            <path d="M12 1v6m0 6v6m4.22-13.22l4.24 4.24M1.54 1.54l4.24 4.24M20.46 20.46l-4.24-4.24M1.54 20.46l4.24-4.24"></path>
+                        </svg>
+                    </div>
+                    <div class="section-title">Advanced Options</div>
+                </div>
+                
+                <div class="setting-item">
+                    <label class="setting-label">Custom User Agent</label>
+                    <input type="text" class="setting-input" id="userAgent" value="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36" placeholder="Custom user agent string">
+                    <div class="info-text">Override the default user agent for better compatibility</div>
+                </div>
+
+                <div class="setting-item">
+                    <label class="setting-label">Connection Timeout (ms)</label>
+                    <input type="text" class="setting-input" id="timeout" value="10000" placeholder="10000">
+                    <div class="info-text">Maximum time to wait for connections before timeout</div>
+                </div>
+
+                <div class="setting-item">
+                    <div class="toggle-container">
+                        <span class="toggle-label">Auto-Connect</span>
+                        <div class="toggle-switch" id="autoConnect" onclick="toggleSwitch(this)"></div>
+                    </div>
+                    <div class="info-text">Automatically connect to proxy on startup</div>
+                </div>
+
+                <div class="setting-item">
+                    <div class="toggle-container">
+                        <span class="toggle-label">Debug Mode</span>
+                        <div class="toggle-switch" id="debugMode" onclick="toggleSwitch(this)"></div>
+                    </div>
+                    <div class="info-text">Enable detailed logging and debugging information</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="button-container">
+            <button class="btn btn-secondary" onclick="resetSettings()">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="23 4 23 10 17 10"></polyline>
+                    <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
+                </svg>
+                Reset
+            </button>
+            <button class="btn btn-primary" onclick="saveSettings()">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+                    <polyline points="17 21 17 13 7 13 7 21"></polyline>
+                    <polyline points="7 3 7 8 15 8"></polyline>
+                </svg>
+                Save Changes
+            </button>
+        </div>
+    </div>
+
+    <script>
+        function toggleSwitch(element) {
+            element.classList.toggle('active');
+        }
+
+        function closeSettings() {
+            if (window.parent) {
+                window.parent.postMessage({ type: 'closeSettings' }, '*');
+            }
+        }
+
+        function loadSettings() {
+            const settings = JSON.parse(localStorage.getItem('proxySettings') || '{}');
+            
+            document.getElementById('proxyType').value = settings.proxyType || 'scramjet';
+            document.getElementById('transportType').value = settings.transportType || 'libcurl';
+            document.getElementById('wispServer').value = settings.wispServer || 'wss://wisp.rhw.one/';
+            document.getElementById('scramjetPrefix').value = settings.scramjetPrefix || '/sail/go/';
+            document.getElementById('userAgent').value = settings.userAgent || 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36';
+            document.getElementById('timeout').value = settings.timeout || '10000';
+            
+            if (settings.autoConnect) {
+                document.getElementById('autoConnect').classList.add('active');
+            }
+            if (settings.debugMode) {
+                document.getElementById('debugMode').classList.add('active');
+            }
+
+            // Test connection on load
+            testConnection();
+        }
+
+        function saveSettings() {
+            const settings = {
+                proxyType: document.getElementById('proxyType').value,
+                transportType: document.getElementById('transportType').value,
+                wispServer: document.getElementById('wispServer').value,
+                scramjetPrefix: document.getElementById('scramjetPrefix').value,
+                userAgent: document.getElementById('userAgent').value,
+                timeout: document.getElementById('timeout').value,
+                autoConnect: document.getElementById('autoConnect').classList.contains('active'),
+                debugMode: document.getElementById('debugMode').classList.contains('active')
+            };
+            
+            localStorage.setItem('proxySettings', JSON.stringify(settings));
+            showStatus('Settings saved successfully!', 'success');
+            
+            if (window.parent) {
+                window.parent.postMessage({ type: 'settingsUpdated', settings }, '*');
+            }
+        }
+
+        function testConnection() {
+            const statusDot = document.getElementById('statusDot');
+            const statusText = document.getElementById('statusText');
+            
+            statusDot.className = 'status-dot';
+            statusText.textContent = 'Testing connection...';
+            
+            const wispServer = document.getElementById('wispServer').value;
+            
+            fetch(wispServer)
+                .then(() => {
+                    statusDot.className = 'status-dot connected';
+                    statusText.textContent = 'Connected to proxy server';
+                })
+                .catch(() => {
+                    statusDot.className = 'status-dot';
+                    statusText.textContent = 'Connection failed';
+                });
+        }
+
+        function resetSettings() {
+            if (confirm('Are you sure you want to reset all settings to default?')) {
+                localStorage.removeItem('proxySettings');
+                loadSettings();
+                showStatus('Settings reset to default', 'success');
+            }
+        }
+
+        function showStatus(message, type) {
+            const statusEl = document.createElement('div');
+            statusEl.className = `status-message ${type}`;
+            statusEl.textContent = message;
+            document.body.appendChild(statusEl);
+            
+            setTimeout(() => {
+                statusEl.remove();
+            }, 3000);
+        }
+
+        // Close on Escape key
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                closeSettings();
+            }
+        });
+
+        // Close on backdrop click
+        document.querySelector('.sidebar-overlay').addEventListener('click', closeSettings);
+
+        loadSettings();
+    </script>
+</body>
+</html>

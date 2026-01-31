@@ -27,7 +27,7 @@
           <button id="open" title="Open in new tab"><i data-lucide="external-link"></i></button>
         </div>
         <div class="bar">
-          <form id="search"><input id="url" type="text" class="search-input search" placeholder="Search the web or enter URL"></form>
+          <input type="text" placeholder="url" id="bar"><button onclick="nav()">Go</button><br>
         </div>
 
 
@@ -43,10 +43,106 @@
     </header>
 
     <main>
-      <iframe id="iframe" sandbox="allow-scripts allow-forms allow-pointer-lock allow-modals allow-popups"></iframe>
+       <iframe src="" frameborder="0" id="frame"></iframe>
     </main>
-    <script src="https://cdn.jsdelivr.net/gh/soap-phia/tinyjet@latest/tinyjet/scramjet.all.js" defer></script>
-    <script type="module" defer src="/proccy.js"></script>
-    <script src="/viewer.js"></script>
+    <script src="/sail/baremux/index.js"></script>
+    <script src="/sail/scram/scramjet.all.js"></script>
+    <script>
+        navigator.serviceWorker.register("/sail/sw.js")
+    </script>
+    <script type="module" defer src="viewer.js"></script>
+    <script type="module" defer src="proccy.js"></script>
   </body>
+
+  <!-- Settings Modal -->
+  <div id="settings-modal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>settings</h2>
+        <span class="close-button">&times;</span>
+      </div>
+      <div class="modal-body">
+        <div class="settings-sidebar">
+          <div class="sidebar-item active" data-category="preferences">
+            <i data-lucide="equalizer"></i>
+            <span>preferences</span>
+          </div>
+          <div class="sidebar-item" data-category="cloaking">
+            <i data-lucide="ghost"></i>
+            <span>cloaking</span>
+          </div>
+          <div class="sidebar-item" data-category="advanced">
+            <i data-lucide="server"></i>
+            <span>advanced</span>
+          </div>
+          <div class="sidebar-item" data-category="data">
+            <i data-lucide="database"></i>
+            <span>data</span>
+          </div>
+          <div class="sidebar-item" data-category="credits">
+            <i data-lucide="heart"></i>
+            <span>credits</span>
+
+        <div class="settings-content">
+          <div id="preferences-settings" class="settings-category active">
+            <div class="setting-item">
+              <h3>search engine</h3>
+              <p>the engine that is used for your search queries.</p>
+              <select id="search-engine">
+                <option value="duckduckgo">duckduckgo</option>
+                <option value="brave">brave</option>
+                <option value="google">google</option>
+              </select>
+            </div>
+            <div class="setting-item">
+              <h3>game source</h3>
+              <p>where all the games are fetched from.</p>
+              <select id="game-source">
+                <option value="selenite">selenite</option>
+                <option value="interstellar">interstellar</option>
+              </select>
+            </div>
+            <div class="setting-item">
+              <h3>prevent closing</h3>
+              <p>prevent the tab from being closed.</p>
+              <label class="toggle-switch">
+                <input type="checkbox" id="prevent-closing">
+                <span class="slider"></span>
+              </label>
+            </div>
+          </div>
+          <div id="cloaking-settings" class="settings-category">
+            <div class="setting-item">
+              <h3>cloak title</h3>
+              <p>set a custom title for the tab.</p>
+              <input type="text" id="cloak-title" placeholder="Enter title...">
+            </div>
+          </div>
+          <div id="advanced-settings" class="settings-category">
+            <div class="setting-item">
+              <h3>debug mode</h3>
+              <p>enable debug logging.</p>
+              <label class="toggle-switch">
+                <input type="checkbox" id="debug-mode">
+                <span class="slider"></span>
+              </label>
+            </div>
+          </div>
+          <div id="data-settings" class="settings-category">
+            <div class="setting-item">
+              <h3>clear data</h3>
+              <p>clear all stored data.</p>
+              <button id="clear-data">Clear Data</button>
+            </div>
+          </div>
+          <div id="credits-settings" class="settings-category">
+            <div class="setting-item">
+              <h3>made with ❤️</h3>
+              <p>using Sail and modern web technologies.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
 </html>

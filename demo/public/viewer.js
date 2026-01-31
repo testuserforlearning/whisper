@@ -1,9 +1,24 @@
 document.addEventListener('DOMContentLoaded', function() {
 	if (window.lucide) lucide.createIcons();
 
-	var frame = document.getElementById('iframe');
+	// Initialize Sail
+	const connection = new BareMux.BareMuxConnection("/sail/baremux/worker.js");
+	connection.setTransport("/sail/libcurl/index.mjs", [{ websocket: "wss://wisp.rhw.one/" }]);
+	
+	const { ScramjetController } = $scramjetLoadController();
+	const scramjet = new ScramjetController({
+		files: {
+			all: "/sail/scram/scramjet.all.js",
+			wasm: "/sail/scram/scramjet.wasm.wasm",
+			sync: "/sail/scram/scramjet.sync.js"
+		},
+		prefix: "/sail/go/"
+	});
+	scramjet.init();
+
+	var frame = document.getElementById('frame');
 	var bar = document.getElementById('stat');
-	var input = document.getElementById('url');
+	var input = document.getElementById('bar');
 	var back = document.getElementById('back');
 	var next = document.getElementById('next');
 	var redo = document.getElementById('redo');
@@ -141,9 +156,14 @@ document.addEventListener('DOMContentLoaded', function() {
 		}
 
 		var target = val.indexOf('://') !== -1 ? val : 'https://' + val;
-		var encoded = btoa(target);
 
-		frame.src = '/proxy?url=' + encoded;
+		if (!target.includes('.')) {
+			target = "https://search.brave.com/search?q=" + encodeURIComponent(target)
+		} else if (!target.startsWith("http://") && !target.startsWith("https://")) {
+			target = "https://" + target
+		}
+
+		frame.src = scramjet.encodeUrl(target);
 		input.value = target;
 
 		if (save) {
@@ -192,7 +212,14 @@ document.addEventListener('DOMContentLoaded', function() {
 	open.addEventListener('click', function() {
 		if (input.value) {
 			var target = input.value.indexOf('://') !== -1 ? input.value : 'https://' + input.value;
-			window.open('/proxy?url=' + btoa(target), '_blank');
+			
+			if (!target.includes('.')) {
+				target = "https://search.brave.com/search?q=" + encodeURIComponent(target)
+			} else if (!target.startsWith("http://") && !target.startsWith("https://")) {
+				target = "https://" + target
+			}
+			
+			window.open(scramjet.encodeUrl(target), '_blank');
 		}
 	});
 
@@ -346,7 +373,6 @@ document.addEventListener('DOMContentLoaded', function() {
 				setInterval(updateClock, 1000);
 			</script>
 		</body></html>`;
-		frame.srcdoc = welcomeHtml;
 		input.value = '';
 		history = [''];
 		pos = 0;

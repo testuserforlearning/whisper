@@ -13,11 +13,16 @@ document.addEventListener('DOMContentLoaded', function() {
 		const val = input.value.trim();
 		if (!val) return setStatus('Please enter a URL', true);
 		try {
-			const u = new URL(val);
-			const encoded = btoa(unescape(encodeURIComponent(u.toString())));
-			const dest = `/proxy?url=${encodeURIComponent(encoded)}`;
-			setStatus('Opening proxied site: ' + u.host);
-			window.location.href = dest;
+			let target = val;
+			
+			if (!target.includes('.')) {
+				target = "https://search.brave.com/search?q=" + encodeURIComponent(target)
+			} else if (!target.startsWith("http://") && !target.startsWith("https://")) {
+				target = "https://" + target
+			}
+			
+			setStatus('Opening site: ' + target);
+			window.location.href = scramjet.encodeUrl(target);
 			window.frameElement.removeAttribute("srcdoc");
 
 		} catch (e) {
