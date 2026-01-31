@@ -45,6 +45,7 @@
     <main>
        <iframe src="" frameborder="0" id="frame"></iframe>
     </main>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
     <script src="/sail/baremux/index.js"></script>
     <script src="/sail/scram/scramjet.all.js"></script>
     <script>
@@ -63,28 +64,25 @@
       </div>
       <div class="modal-body">
         <div class="settings-sidebar">
-          <div class="sidebar-item active" data-category="preferences">
-            <i data-lucide="equalizer"></i>
+          <div class="sidebar-item" data-category="preferences">
+            <i data-lucide="settings-2"></i>
             <span>preferences</span>
           </div>
-          <div class="sidebar-item" data-category="cloaking">
+          <div class="sidebar-item active" data-category="cloaking">
             <i data-lucide="ghost"></i>
             <span>cloaking</span>
           </div>
           <div class="sidebar-item" data-category="advanced">
-            <i data-lucide="server"></i>
+            <i data-lucide="server-cog"></i>
             <span>advanced</span>
-          </div>
-          <div class="sidebar-item" data-category="data">
-            <i data-lucide="database"></i>
-            <span>data</span>
           </div>
           <div class="sidebar-item" data-category="credits">
             <i data-lucide="heart"></i>
             <span>credits</span>
-
+          </div>
+        </div>
         <div class="settings-content">
-          <div id="preferences-settings" class="settings-category active">
+          <div id="preferences-settings" class="settings-category">
             <div class="setting-item">
               <h3>search engine</h3>
               <p>the engine that is used for your search queries.</p>
@@ -111,11 +109,25 @@
               </label>
             </div>
           </div>
-          <div id="cloaking-settings" class="settings-category">
+          <div id="cloaking-settings" class="settings-category active">
             <div class="setting-item">
-              <h3>cloak title</h3>
-              <p>set a custom title for the tab.</p>
-              <input type="text" id="cloak-title" placeholder="Enter title...">
+              <h3>decoy</h3>
+              <p>cloak the current website title and favicon as a different website.</p>
+              <select id="decoy">
+                <option value="none">none</option>
+                <option value="google">google</option>
+                <option value="schoology">schoology</option>
+                <option value="classroom">google classroom</option>
+              </select>
+            </div>
+            <div class="setting-item">
+              <h3>cloak link</h3>
+              <p>cloak the website link in the url bar.</p>
+              <select id="cloak-link">
+                <option value="none">none</option>
+                <option value="about:blank">about:blank</option>
+                <option value="google">google.com</option>
+              </select>
             </div>
           </div>
           <div id="advanced-settings" class="settings-category">
@@ -126,13 +138,6 @@
                 <input type="checkbox" id="debug-mode">
                 <span class="slider"></span>
               </label>
-            </div>
-          </div>
-          <div id="data-settings" class="settings-category">
-            <div class="setting-item">
-              <h3>clear data</h3>
-              <p>clear all stored data.</p>
-              <button id="clear-data">Clear Data</button>
             </div>
           </div>
           <div id="credits-settings" class="settings-category">

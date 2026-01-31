@@ -379,4 +379,246 @@ document.addEventListener('DOMContentLoaded', function() {
 		updateNav();
 		updateTabTitle('Home');
 	}
+
+// Settings Modal functionality
+const modal = document.getElementById('settings-modal');
+const settingsBtn = document.getElementById('settings');
+const closeBtn = document.querySelector('.close-button');
+const sidebarItems = document.querySelectorAll('.sidebar-item');
+const settingsCategories = document.querySelectorAll('.settings-category');
+
+// Open modal
+settingsBtn.addEventListener('click', function() {
+	modal.style.display = 'block';
+	document.body.classList.add('modal-open');
+	
+	// Set initial state for animation
+	gsap.set('.modal-content', {
+		opacity: 0,
+		scale: 0.7,
+		y: 50
+	});
+	
+	gsap.set('.sidebar-item', {
+		opacity: 0,
+		x: -30
+	});
+	
+	gsap.set('.setting-item', {
+		opacity: 0,
+		y: 20
+	});
+	
+	// Animate modal content with pop effect
+	gsap.to('.modal-content', {
+		opacity: 1,
+		scale: 1,
+		y: 0,
+		duration: 0.4,
+		delay: 0.1,
+		ease: "back.out(1.7)"
+	});
+	
+	// Animate sidebar items with stagger
+	gsap.to('.sidebar-item', {
+		opacity: 1,
+		x: 0,
+		duration: 0.3,
+		delay: 0.3,
+		stagger: 0.05,
+		ease: "power2.out"
+	});
+	
+	// Animate setting items with stagger
+	gsap.to('.setting-item', {
+		opacity: 1,
+		y: 0,
+		duration: 0.3,
+		delay: 0.5,
+		stagger: 0.08,
+		ease: "power2.out"
+	});
+	
+	if (window.lucide) lucide.createIcons();
+});
+
+// Close modal
+closeBtn.addEventListener('click', function() {
+	closeModal();
+});
+
+// Close modal when clicking outside
+window.addEventListener('click', function(event) {
+	if (event.target === modal) {
+		closeModal();
+	}
+});
+
+function closeModal() {
+	// Animate out
+	gsap.to('.setting-item', {
+		opacity: 0,
+		y: 20,
+		duration: 0.2,
+		stagger: 0.05,
+		ease: "power2.in"
+	});
+	
+	gsap.to('.sidebar-item', {
+		opacity: 0,
+		x: -30,
+		duration: 0.2,
+		delay: 0.1,
+		stagger: 0.03,
+		ease: "power2.in"
+	});
+	
+	gsap.to('.modal-content', {
+		opacity: 0,
+		scale: 0.7,
+		y: 50,
+		duration: 0.3,
+		delay: 0.2,
+		ease: "back.in(1.7)",
+		onComplete: () => {
+			modal.style.display = 'none';
+			document.body.classList.remove('modal-open');
+		}
+	});
+}
+
+// Sidebar navigation
+sidebarItems.forEach(item => {
+	item.addEventListener('click', function() {
+		const category = this.getAttribute('data-category');
+		
+		// Update active states
+		sidebarItems.forEach(i => i.classList.remove('active'));
+		this.classList.add('active');
+		
+		// Animate out current category
+		const currentCategory = document.querySelector('.settings-category.active');
+		if (currentCategory) {
+			gsap.to(currentCategory.querySelectorAll('.setting-item'), {
+				opacity: 0,
+				y: 20,
+				duration: 0.2,
+				stagger: 0.05,
+				ease: "power2.in",
+				onComplete: () => {
+					currentCategory.classList.remove('active');
+					
+					// Show new category
+					const newCategory = document.getElementById(`${category}-settings`);
+					if (newCategory) {
+						newCategory.classList.add('active');
+						
+						// Animate in new category
+						gsap.set(newCategory.querySelectorAll('.setting-item'), {
+							opacity: 0,
+							y: 20
+						});
+						
+						gsap.to(newCategory.querySelectorAll('.setting-item'), {
+							opacity: 1,
+							y: 0,
+							duration: 0.3,
+							stagger: 0.08,
+							ease: "power2.out"
+						});
+					}
+				}
+			});
+		}
+	});
+});
+
+// Settings functionality
+document.getElementById('prevent-closing').addEventListener('change', function() {
+	if (this.checked) {
+		window.addEventListener('beforeunload', preventClose);
+	} else {
+		window.removeEventListener('beforeunload', preventClose);
+	}
+});
+
+function preventClose(e) {
+	e.preventDefault();
+	e.returnValue = '';
+}
+
+document.getElementById('clear-data').addEventListener('click', function() {
+	if (confirm('Are you sure you want to clear all data?')) {
+		localStorage.clear();
+		sessionStorage.clear();
+		alert('All data cleared!');
+	}
+});
+
+document.getElementById('debug-mode').addEventListener('change', function() {
+	if (this.checked) {
+		console.log('Debug mode enabled');
+		// Enable debug logging here
+	} else {
+		console.log('Debug mode disabled');
+		// Disable debug logging here
+	}
+});
+
+document.getElementById('cloak-title').addEventListener('input', function() {
+	if (this.value.trim()) {
+		document.title = this.value.trim();
+	} else {
+		document.title = 'new proccy';
+	}
+});
+
+// Cloaking functionality
+document.getElementById('decoy').addEventListener('change', function() {
+	const decoy = this.value;
+	if (decoy === 'none') {
+		document.title = 'new proccy';
+		// Reset favicon
+		const favicon = document.querySelector('link[rel="icon"]') || document.createElement('link');
+		favicon.rel = 'icon';
+		favicon.href = '';
+		document.head.appendChild(favicon);
+	} else {
+		// Set decoy title and favicon
+		switch(decoy) {
+			case 'google':
+				document.title = 'Google';
+				setFavicon('https://www.google.com/favicon.ico');
+				break;
+			case 'schoology':
+				document.title = 'Schoology';
+				setFavicon('https://asset.schoology.com/sites/all/themes/schoology_theme/favicon.ico');
+				break;
+			case 'classroom':
+				document.title = 'Google Classroom';
+				setFavicon('https://ssl.gstatic.com/classroom/favicon.png');
+				break;
+		}
+	}
+});
+
+document.getElementById('cloak-link').addEventListener('change', function() {
+	const cloak = this.value;
+	if (cloak === 'none') {
+		history.replaceState(null, '', window.location.pathname);
+	} else {
+		history.replaceState(null, '', cloak);
+	}
+});
+
+function setFavicon(url) {
+	let favicon = document.querySelector('link[rel="icon"]');
+	if (!favicon) {
+		favicon = document.createElement('link');
+		favicon.rel = 'icon';
+		document.head.appendChild(favicon);
+	}
+	favicon.href = url;
+}
+
 });
