@@ -9,22 +9,32 @@
   </head>
   <body>
     <header>
-      <div class="top">
+      <div class="tabs-container">
+        <div class="tabs" id="tabs">
+          <div class="tab active" data-tab-id="0">
+            <span class="tab-title">Home</span>
+            <button class="tab-close" data-tab-id="0"><i data-lucide="x"></i></button>
+          </div>
+        </div>
+        <button id="new-tab" class="new-tab-btn" title="New Tab"><i data-lucide="plus"></i></button>
+      </div>
+      
+      <div class="centered-bar">
         <div class="navs">
           <button id="back" title="Back"><i data-lucide="arrow-left"></i></button>
           <button id="next" title="Forward"><i data-lucide="arrow-right"></i></button>
           <button id="redo" title="Reload"><i data-lucide="rotate-cw"></i></button>
           <button id="open" title="Open in new tab"><i data-lucide="external-link"></i></button>
         </div>
-        
         <div class="bar">
-          <input id="url" type="text" placeholder="Search or enter URL" autocomplete="off" />
+          <form id="search"><input id="url" type="text" class="search-input search" placeholder="Search the web or enter URL"></form>
         </div>
-         <div class="top">
+
+
         <div class="navs">
-          <button id="games" title="Back"><i data-lucide="arrow-left"></i></button>
-          <button id="settings" title="Forward"><i data-lucide="arrow-right"></i></button>
-          <button id="apps" title="Open in new tab"><i data-lucide="external-link"></i></button>
+          <button id="games" title="Games"><i data-lucide="gamepad-2"></i></button>
+          <button id="settings" title="Settings"><i data-lucide="settings"></i></button>
+          <button id="apps" title="Apps"><i data-lucide="grid-3x3"></i></button>
         </div>
       </div>
       <div class="status">
@@ -33,53 +43,10 @@
     </header>
 
     <main>
-      <iframe id="frame" sandbox="allow-scripts allow-forms allow-pointer-lock allow-modals allow-popups"></iframe>
+      <iframe id="iframe" sandbox="allow-scripts allow-forms allow-pointer-lock allow-modals allow-popups"></iframe>
     </main>
-
-    <script src="//cdn.jsdelivr.net/npm/eruda"></script>
-    <script>
-      function initEruda() {
-        const container = document.createElement('div');
-        container.id = 'eruda-container';
-        container.style.position = 'fixed';
-        container.style.zIndex = '10000';
-        container.style.pointerEvents = 'none';
-        container.style.bottom = '0';
-        container.style.left = '0';
-        container.style.width = '0';
-        container.style.height = '0';
-        document.body.appendChild(container);
-
-        eruda.init({
-          container: container,
-          defaults: {
-            displaySize: 40,
-            theme: 'Dracula'
-          }
-        });
-
-        setTimeout(() => {
-          const shadowRoot = container.shadowRoot || (container.firstElementChild && container.firstElementChild.shadowRoot);
-          
-          if (shadowRoot) {
-             const style = document.createElement('style');
-             style.textContent = `
-               .eruda-entry-btn {
-                 left: 20px !important;
-                 right: auto !important;
-                 border-radius: 20px !important; /* Match --pill-radius */
-                 bottom: 20px !important;
-                 pointer-events: auto !important; /* Re-enable clicks on the button */
-                 position: fixed !important; /* Ensure it stays fixed relative to screen */
-               }
-             `;
-             shadowRoot.appendChild(style);
-          }
-        }, 100);
-      }
-      
-      initEruda();
-    </script>
+    <script src="https://cdn.jsdelivr.net/gh/soap-phia/tinyjet@latest/tinyjet/scramjet.all.js" defer></script>
+    <script type="module" defer src="/proccy.js"></script>
     <script src="/viewer.js"></script>
   </body>
 </html>

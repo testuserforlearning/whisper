@@ -16,26 +16,147 @@
 
 html, body {
   height: 100%;
-  overflow: hidden;
-  background: var(--bg);
+  margin: 0;
+  padding: 0;
 }
 
 body {
-  margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, sans-serif;
+  background: var(--bg);
   color: var(--text);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   display: flex;
   flex-direction: column;
+  min-height: 100vh;
 }
 
 header {
-  padding: 12px 16px 20px 16px;
+  padding: 8px 16px 20px 16px;
   background: transparent;
   display: flex;
   flex-direction: column;
   gap: 8px;
   position: relative;
   z-index: 10;
+}
+
+.tabs-container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px;
+  margin-bottom: 8px;
+  width: 100%;
+}
+
+.tabs {
+  display: flex;
+  flex: 1;
+  gap: 2px;
+  background: #111;
+  border: 1px solid var(--border);
+  border-radius: var(--pill-radius);
+  padding: 2px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.new-tab-btn {
+  background: #111;
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 6px 10px;
+  cursor: pointer;
+  border-radius: var(--pill-radius);
+  font-size: 16px;
+  font-weight: bold;
+  min-width: 32px;
+  height: 32px;
+  transition: background 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.new-tab-btn:hover {
+  background: var(--accent);
+}
+
+.new-tab-btn svg {
+  width: 16px;
+  height: 16px;
+}
+
+.tabs::-webkit-scrollbar {
+  display: none;
+}
+
+.centered-bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.tab {
+  display: flex;
+  align-items: center;
+  background: transparent;
+  border: none;
+  border-radius: var(--pill-radius);
+  padding: 6px 10px;
+  gap: 6px;
+  cursor: pointer;
+  min-width: 100px;
+  max-width: 160px;
+  position: relative;
+  transition: background 0.2s;
+}
+
+.tab:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.tab.active {
+  background: var(--accent);
+}
+
+.tab-title {
+  flex: 1;
+  font-size: 12px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--text);
+}
+
+.tab-close {
+  background: transparent;
+  border: none;
+  color: white;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  font-size: 16px;
+  line-height: 1;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+.tab-close svg {
+  width: 14px;
+  height: 14px;
+  stroke: white;
+  stroke-width: 2;
+}
+
+.tab-close:hover {
+  background: rgba(255, 255, 255, 0.2);
 }
 
 .top {
@@ -86,18 +207,37 @@ button svg {
   background: #111;
   border: 1px solid var(--border);
   border-radius: var(--pill-radius);
-  padding: 2px 14px;
+  padding: 2px;
   align-items: center;
 }
 
 .bar input {
-  flex: 1;
   background: transparent;
   border: none;
   color: var(--text);
+  padding: 8px 12px;
+  font-size: 14px;
+  flex: 1;
   outline: none;
-  font-size: 13px;
-  height: 32px;
+}
+
+.bar input::placeholder {
+  color: var(--muted);
+}
+
+.search-input {
+  background: transparent;
+  border: none;
+  color: var(--text);
+  padding: 8px 12px;
+  font-size: 14px;
+  flex: 1;
+  outline: none;
+  width: 100%;
+}
+
+.search-input::placeholder {
+  color: var(--muted);
 }
 
 .bar:focus-within {
@@ -124,7 +264,7 @@ div.status {
 
 main {
   flex: 1;
-  background: #fff;
+  background: #1c1c1d;
   margin: 0 8px 8px 8px;
   margin-top: -12px;
   border-radius: 32px;
@@ -132,6 +272,7 @@ main {
   position: relative;
   z-index: 5;
   box-shadow: 0 10px 40px rgba(0,0,0,0.4);
+  min-height: 0;
 }
 
 main::before, main::after {
@@ -162,6 +303,12 @@ iframe {
   border: none;
   background: #fff;
   transition: opacity 0.3s ease;
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  border-radius: 32px;
 }
 
 iframe.loading {
